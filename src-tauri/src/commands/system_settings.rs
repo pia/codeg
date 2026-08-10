@@ -9,8 +9,8 @@ use crate::db::AppDatabase;
 #[cfg(feature = "tauri-runtime")]
 use crate::models::SystemRenderingSettings;
 use crate::models::{
-    AvailableTerminalShells, SystemLanguageSettings, SystemProxySettings, SystemTerminalSettings,
-    TerminalShellOption,
+    AvailableTerminalShells, ReasoningTranslationSettings, SystemLanguageSettings,
+    SystemProxySettings, SystemTerminalSettings, TerminalShellOption,
 };
 #[cfg(feature = "tauri-runtime")]
 use crate::network::proxy;
@@ -21,8 +21,11 @@ use crate::terminal::manager::resolve_shell;
 pub(crate) const SYSTEM_PROXY_SETTINGS_KEY: &str = "system_proxy_settings";
 pub(crate) const SYSTEM_LANGUAGE_SETTINGS_KEY: &str = "system_language_settings";
 pub(crate) const SYSTEM_TERMINAL_SETTINGS_KEY: &str = "system_terminal_settings";
+pub(crate) const REASONING_TRANSLATION_SETTINGS_KEY: &str = "reasoning_translation_settings";
 pub(crate) const LANGUAGE_SETTINGS_UPDATED_EVENT: &str = "app://language-settings-updated";
 pub(crate) const TERMINAL_SETTINGS_UPDATED_EVENT: &str = "app://terminal-settings-updated";
+pub(crate) const REASONING_TRANSLATION_SETTINGS_UPDATED_EVENT: &str =
+    "app://reasoning-translation-settings-updated";
 
 pub(crate) const TERMINAL_SHELL_OPTION_SYSTEM: &str = "system";
 pub(crate) const TERMINAL_SHELL_OPTION_CUSTOM: &str = "custom";
@@ -210,6 +213,39 @@ pub(crate) async fn load_system_terminal_settings(
     Ok(normalize_terminal_settings(parsed))
 }
 
+pub(crate) async fn load_reasoning_translation_settings(
+    conn: &DatabaseConnection,
+) -> Result<ReasoningTranslationSettings, AppCommandError> {
+    let raw = app_metadata_service::get_value(conn, REASONING_TRANSLATION_SETTINGS_KEY)
+        .await
+        .map_err(AppCommandError::from)?;
+
+    let Some(raw) = raw else {
+        return Ok(ReasoningTranslationSettings::default());
+    };
+
+    serde_json::from_str::<ReasoningTranslationSettings>(&raw).map_err(|e| {
+        AppCommandError::configuration_invalid("Failed to parse stored reasoning translation settings")
+            .with_detail(e.to_string())
+    })
+}
+
+pub(crate) async fn update_reasoning_translation_settings_core(
+    conn: &DatabaseConnection,
+    settings: ReasoningTranslationSettings,
+) -> Result<ReasoningTranslationSettings, AppCommandError> {
+    let serialized = serde_json::to_string(&settings).map_err(|e| {
+        AppCommandError::invalid_input("Failed to serialize reasoning translation settings")
+            .with_detail(e.to_string())
+    })?;
+
+    app_metadata_service::upsert_value(conn, REASONING_TRANSLATION_SETTINGS_KEY, &serialized)
+        .await
+        .map_err(AppCommandError::from)?;
+
+    Ok(settings)
+}
+
 #[cfg(feature = "tauri-runtime")]
 #[cfg_attr(feature = "tauri-runtime", tauri::command)]
 pub async fn get_system_proxy_settings(
@@ -317,6 +353,33 @@ pub async fn update_system_terminal_settings(
     );
 
     Ok(normalized)
+}
+
+#[cfg(feature = "tauri-runtime")]
+#[cfg_attr(feature = "tauri-runtime", tauri::command)]
+pub async fn get_reasoning_translation_settings(
+    db: State<'_, AppDatabase>,
+) -> Result<ReasoningTranslationSettings, AppCommandError> {
+    load_reasoning_translation_settings(&db.conn).await
+}
+
+#[cfg(feature = "tauri-runtime")]
+#[cfg_attr(feature = "tauri-runtime", tauri::command)]
+pub async fn update_reasoning_translation_settings(
+    settings: ReasoningTranslationSettings,
+    db: State<'_, AppDatabase>,
+    app: tauri::AppHandle,
+) -> Result<ReasoningTranslationSettings, AppCommandError> {
+    let saved = update_reasoning_translation_settings_core(&db.conn, settings).await?;
+
+    let emitter = crate::web::event_bridge::EventEmitter::Tauri(app);
+    crate::web::event_bridge::emit_event(
+        &emitter,
+        REASONING_TRANSLATION_SETTINGS_UPDATED_EVENT,
+        saved.clone(),
+    );
+
+    Ok(saved)
 }
 
 #[cfg(feature = "tauri-runtime")]

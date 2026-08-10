@@ -33,6 +33,11 @@ pub struct UpdateTerminalSettingsParams {
     pub settings: SystemTerminalSettings,
 }
 
+#[derive(Deserialize)]
+pub struct UpdateReasoningTranslationSettingsParams {
+    pub settings: ReasoningTranslationSettings,
+}
+
 // ---------------------------------------------------------------------------
 // Read handlers
 // ---------------------------------------------------------------------------
@@ -58,6 +63,14 @@ pub async fn get_system_terminal_settings(
 ) -> Result<Json<SystemTerminalSettings>, AppCommandError> {
     let db = &state.db;
     let settings = settings_commands::load_system_terminal_settings(&db.conn).await?;
+    Ok(Json(settings))
+}
+
+pub async fn get_reasoning_translation_settings(
+    Extension(state): Extension<Arc<AppState>>,
+) -> Result<Json<ReasoningTranslationSettings>, AppCommandError> {
+    let db = &state.db;
+    let settings = settings_commands::load_reasoning_translation_settings(&db.conn).await?;
     Ok(Json(settings))
 }
 
@@ -149,6 +162,23 @@ pub async fn update_system_terminal_settings(
     crate::web::event_bridge::emit_event(
         &state.emitter,
         TERMINAL_SETTINGS_UPDATED_EVENT,
+        settings.clone(),
+    );
+
+    Ok(Json(settings))
+}
+
+pub async fn update_reasoning_translation_settings(
+    Extension(state): Extension<Arc<AppState>>,
+    Json(params): Json<UpdateReasoningTranslationSettingsParams>,
+) -> Result<Json<ReasoningTranslationSettings>, AppCommandError> {
+    let settings =
+        settings_commands::update_reasoning_translation_settings_core(&state.db.conn, params.settings)
+            .await?;
+
+    crate::web::event_bridge::emit_event(
+        &state.emitter,
+        settings_commands::REASONING_TRANSLATION_SETTINGS_UPDATED_EVENT,
         settings.clone(),
     );
 

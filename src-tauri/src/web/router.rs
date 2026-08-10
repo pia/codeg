@@ -596,6 +596,10 @@ pub fn build_router(
             post(handlers::system_settings::get_system_terminal_settings),
         )
         .route(
+            "/get_reasoning_translation_settings",
+            post(handlers::system_settings::get_reasoning_translation_settings),
+        )
+        .route(
             "/get_available_terminal_shells",
             post(handlers::system_settings::get_available_terminal_shells),
         )
@@ -614,6 +618,10 @@ pub fn build_router(
         .route(
             "/update_system_terminal_settings",
             post(handlers::system_settings::update_system_terminal_settings),
+        )
+        .route(
+            "/update_reasoning_translation_settings",
+            post(handlers::system_settings::update_reasoning_translation_settings),
         )
         // ─── Logging ───
         .route(

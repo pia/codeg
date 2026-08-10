@@ -43,6 +43,22 @@ pub struct SystemTerminalSettings {
     pub default_shell: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ReasoningTranslationSettings {
+    pub enabled: bool,
+    pub target_language: String,
+}
+
+impl Default for ReasoningTranslationSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            target_language: "zh-CN".to_string(),
+        }
+    }
+}
+
 /// One row in the "default shell" picker. Backend owns the option list so the
 /// frontend doesn't have to know which shells are available on which platform.
 /// Labels are not localized server-side: `label_key` points at a frontend i18n

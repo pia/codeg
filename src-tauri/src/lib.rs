@@ -1114,6 +1114,8 @@ mod tauri_app {
                 system_settings::update_system_language_settings,
                 system_settings::get_system_terminal_settings,
                 system_settings::update_system_terminal_settings,
+                system_settings::get_reasoning_translation_settings,
+                system_settings::update_reasoning_translation_settings,
                 system_settings::get_available_terminal_shells,
                 system_settings::probe_terminal_shell_path,
                 system_settings::get_system_rendering_settings,

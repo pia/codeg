@@ -51,6 +51,6 @@ pub use work_task::{
 pub use system::SystemRenderingSettings;
 pub use system::{
     AvailableTerminalShells, GitCredentials, GitDetectResult, GitHubAccountsSettings,
-    GitHubTokenValidation, GitSettings, SystemLanguageSettings, SystemProxySettings,
-    SystemTerminalSettings, TerminalShellOption,
+    GitHubTokenValidation, GitSettings, ReasoningTranslationSettings, SystemLanguageSettings,
+    SystemProxySettings, SystemTerminalSettings, TerminalShellOption,
 };

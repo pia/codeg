@@ -2791,6 +2791,9 @@
         "running": "실행 중"
       },
       "reasoning": {
+        "translating": "번역 중…",
+        "showOriginal": "원문 보기",
+        "showTranslation": "번역 보기",
         "thinking": "생각 중…",
         "thoughtForFewSeconds": "생각함",
         "thoughtForSeconds": "생각함"

@@ -15,6 +15,7 @@ import {
   getReasoningTranslationSettings,
   updateReasoningTranslationSettings,
 } from "@/lib/api"
+import { invalidateReasoningTranslationSettingsCache } from "@/lib/reasoning-translation"
 import type {
   ReasoningTranslationSettings,
   TranslationModelStatus,
@@ -76,6 +77,7 @@ export function ReasoningTranslationSettingsSection() {
           enabled,
         })
         setSettings(next)
+        invalidateReasoningTranslationSettingsCache()
       } catch (err) {
         toast.error(t("saveFailed", { message: toErrorMessage(err) }))
       } finally {

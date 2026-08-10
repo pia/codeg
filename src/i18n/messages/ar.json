@@ -2791,6 +2791,9 @@
         "running": "قيد التشغيل"
       },
       "reasoning": {
+        "translating": "جارٍ الترجمة…",
+        "showOriginal": "عرض النص الأصلي",
+        "showTranslation": "عرض الترجمة",
         "thinking": "جارٍ التفكير…",
         "thoughtForFewSeconds": "تفكير",
         "thoughtForSeconds": "تفكير"

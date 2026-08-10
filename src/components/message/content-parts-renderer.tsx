@@ -43,6 +43,7 @@ import {
   ReasoningTrigger,
   ReasoningContent,
 } from "@/components/ai-elements/reasoning"
+import { useReasoningTranslation } from "@/lib/reasoning-translation"
 import { AgentToolCallPart } from "./agent-tool-call"
 import { AskQuestionResultCard } from "./ask-question-result-card"
 import { CollabAgentCard } from "./collab-agent-card"
@@ -2833,12 +2834,39 @@ const ReasoningPart = memo(function ReasoningPart({
 }: {
   part: Extract<AdaptedContentPart, { type: "reasoning" }>
 }) {
+  const t = useTranslations("Folder.chat.reasoning")
   const hasContent = part.content.trim().length > 0
   const expandable = hasContent || part.isStreaming
+  const { displayText, view, isPending, setView, translationEnabled } =
+    useReasoningTranslation(part.content, part.isStreaming)
   return (
     <Reasoning isStreaming={part.isStreaming} expandable={expandable}>
       <ReasoningTrigger />
-      {expandable && <ReasoningContent>{part.content}</ReasoningContent>}
+      {expandable && (
+        <div className="space-y-1">
+          {translationEnabled && hasContent && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() =>
+                  setView(view === "translation" ? "original" : "translation")
+                }
+                className="text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                {view === "translation"
+                  ? t("showOriginal")
+                  : t("showTranslation")}
+              </button>
+            </div>
+          )}
+          {isPending && view === "translation" && (
+            <p className="text-[11px] text-muted-foreground">
+              {t("translating")}
+            </p>
+          )}
+          <ReasoningContent>{displayText}</ReasoningContent>
+        </div>
+      )}
     </Reasoning>
   )
 })

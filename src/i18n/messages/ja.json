@@ -2791,6 +2791,9 @@
         "running": "実行中"
       },
       "reasoning": {
+        "translating": "翻訳中…",
+        "showOriginal": "原文を表示",
+        "showTranslation": "訳文を表示",
         "thinking": "考え中…",
         "thoughtForFewSeconds": "考えた",
         "thoughtForSeconds": "考えた"

@@ -2791,6 +2791,9 @@
         "running": "Em execução"
       },
       "reasoning": {
+        "translating": "Traduzindo…",
+        "showOriginal": "Ver original",
+        "showTranslation": "Ver tradução",
         "thinking": "Pensando…",
         "thoughtForFewSeconds": "Pensamento",
         "thoughtForSeconds": "Pensamento"

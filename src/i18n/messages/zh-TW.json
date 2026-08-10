@@ -2791,6 +2791,9 @@
         "running": "執行中"
       },
       "reasoning": {
+        "translating": "翻譯中…",
+        "showOriginal": "顯示原文",
+        "showTranslation": "顯示譯文",
         "thinking": "思考中…",
         "thoughtForFewSeconds": "思考",
         "thoughtForSeconds": "思考"

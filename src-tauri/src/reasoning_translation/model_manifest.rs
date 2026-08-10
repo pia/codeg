@@ -45,7 +45,7 @@ pub(crate) fn file_url(base: &str, revision: &str, file: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{MODEL_FILES, MODEL_REVISION};
+    use super::MODEL_FILES;
 
     #[test]
     fn manifest_has_real_sha256_hashes() {
@@ -56,6 +56,5 @@ mod tests {
         }
         assert!(MODEL_FILES.iter().any(|(f, _)| *f == "onnx/encoder_model.onnx"));
         assert!(MODEL_FILES.iter().any(|(f, _)| *f == "onnx/decoder_model.onnx"));
-        assert!(!MODEL_REVISION.is_empty());
     }
 }

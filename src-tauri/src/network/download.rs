@@ -83,7 +83,7 @@ mod tests {
         let dest = dir.path().join("out.bin");
         let mut final_total = None;
         download_file_with_progress(
-            &srv.server_url("/blob").unwrap().to_string(),
+            srv.server_url("/blob").unwrap().as_str(),
             &dest,
             || false,
             |_, total| final_total = total,
@@ -108,7 +108,7 @@ mod tests {
         let cancel = Arc::new(AtomicBool::new(false));
         let cancel_for_progress = cancel.clone();
         let err = download_file_with_progress(
-            &srv.server_url("/chunks").unwrap().to_string(),
+            srv.server_url("/chunks").unwrap().as_str(),
             &dest,
             move || cancel.load(Ordering::SeqCst),
             move |_, _| {

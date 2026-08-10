@@ -106,8 +106,7 @@ mod tests {
     }
 
     async fn ready_model(dir: &Path) -> Arc<TranslationModelManager> {
-        let mgr = TranslationModelManager::new_for_test_ready(dir.to_path_buf());
-        mgr
+        TranslationModelManager::new_for_test_ready(dir.to_path_buf())
     }
 
     #[tokio::test]

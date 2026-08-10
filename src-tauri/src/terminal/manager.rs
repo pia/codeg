@@ -222,6 +222,7 @@ pub struct SpawnOptions {
 }
 
 impl TerminalManager {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
             terminals: Arc::new(Mutex::new(HashMap::new())),

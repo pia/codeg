@@ -55,3 +55,6 @@ src-tauri/binaries/
 
 # pnpm local store (pnpm 11+)
 .pnpm-store/
+
+# Local spike/scratch artifacts (model downloads, test logs)
+tmp/

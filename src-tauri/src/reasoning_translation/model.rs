@@ -438,8 +438,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let mgr = manager_for(
             dir.path(),
-            &primary.server_url("/").unwrap().to_string(),
-            &mirror.server_url("/").unwrap().to_string(),
+            primary.server_url("/").unwrap().as_str(),
+            mirror.server_url("/").unwrap().as_str(),
             files,
         );
 
@@ -456,8 +456,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let mgr = manager_for(
             dir.path(),
-            &primary.server_url("/").unwrap().to_string(),
-            &mirror.server_url("/").unwrap().to_string(),
+            primary.server_url("/").unwrap().as_str(),
+            mirror.server_url("/").unwrap().as_str(),
             files,
         );
 
@@ -478,8 +478,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let mgr = manager_for(
             dir.path(),
-            &primary.server_url("/").unwrap().to_string(),
-            &mirror.server_url("/").unwrap().to_string(),
+            primary.server_url("/").unwrap().as_str(),
+            mirror.server_url("/").unwrap().as_str(),
             files,
         );
 
@@ -508,8 +508,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let mgr = manager_for(
             dir.path(),
-            &primary.server_url("/").unwrap().to_string(),
-            &mirror.server_url("/").unwrap().to_string(),
+            primary.server_url("/").unwrap().as_str(),
+            mirror.server_url("/").unwrap().as_str(),
             files,
         );
         mgr.start_download().await.unwrap();

@@ -270,6 +270,9 @@ async fn async_main() -> ExitCode {
         db.conn.clone(),
         data_dir.clone(),
     );
+    let translation_model = codeg_lib::reasoning_translation::model::TranslationModelManager::new(
+        data_dir.clone(),
+    );
     let state = Arc::new(AppState {
         db,
         connection_manager,
@@ -293,6 +296,7 @@ async fn async_main() -> ExitCode {
         chat_authoring_config: chat_authoring_config.clone(),
         system_op_lock: codeg_lib::app_state::default_system_op_lock(),
         update_state: codeg_lib::app_state::default_update_state(),
+        translation_model,
     });
 
     // Logging phase 3: wire the emitter so the Logs viewer's live tail

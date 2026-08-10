@@ -843,6 +843,10 @@ pub(crate) async fn do_start_web_server_tauri(
             .state::<crate::update::AppUpdateStateHandle>()
             .inner()
             .clone(),
+        translation_model: app
+            .state::<Arc<crate::reasoning_translation::model::TranslationModelManager>>()
+            .inner()
+            .clone(),
     });
 
     // See do_start_web_server_with_state for rationale on the reset.

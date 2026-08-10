@@ -75,6 +75,9 @@ pub struct AppState {
     /// The upgrade UI subscribes to it and re-syncs from a snapshot on mount,
     /// so download progress survives settings-page navigation and reloads.
     pub update_state: crate::update::AppUpdateStateHandle,
+    /// Translation model manager (download/verify/delete + status). Desktop
+    /// mode also manages the same Arc directly for Tauri commands.
+    pub translation_model: std::sync::Arc<crate::reasoning_translation::model::TranslationModelManager>,
 }
 
 pub fn default_system_op_lock() -> Arc<tokio::sync::Mutex<()>> {
@@ -229,7 +232,7 @@ impl AppState {
             event_broadcaster: broadcaster,
             acp_event_bus,
             emitter,
-            data_dir,
+            data_dir: data_dir.clone(),
             web_server_state: crate::web::WebServerState::new(),
             chat_channel_manager: default_chat_channel_manager(),
             workspace_transfer: Arc::new(
@@ -247,6 +250,9 @@ impl AppState {
             chat_authoring_config,
             system_op_lock: default_system_op_lock(),
             update_state: default_update_state(),
+            translation_model: crate::reasoning_translation::model::TranslationModelManager::new(
+                data_dir.clone(),
+            ),
         }
     }
 }

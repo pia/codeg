@@ -37,6 +37,7 @@ pub mod pets;
 #[cfg(feature = "tauri-runtime")]
 pub mod preferences;
 pub mod process;
+pub mod reasoning_translation;
 pub mod supervise;
 mod terminal;
 pub mod turn_timings;
@@ -315,6 +316,9 @@ mod tauri_app {
                 ))
                 .map_err(|e| e.to_string())?;
                 app.manage(database);
+                app.manage(crate::reasoning_translation::model::TranslationModelManager::new(
+                    effective_data_dir.clone(),
+                ));
 
                 // Restore and apply saved system proxy settings before any network operation.
                 let db = app.state::<db::AppDatabase>();

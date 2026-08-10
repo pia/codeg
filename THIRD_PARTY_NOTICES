@@ -1,0 +1,20 @@
+Third-Party Notices
+===================
+
+This project includes or can download the following third-party components.
+
+ONNX Runtime
+------------
+Copyright (c) Microsoft Corporation
+
+Licensed under the MIT License.
+https://github.com/microsoft/onnxruntime
+
+opus-mt-en-zh (OPUS-MT)
+-----------------------
+Developed by the Language Technology Research Group at the University of
+Helsinki (OPUS project).
+
+Licensed under CC-BY-4.0.
+https://huggingface.co/onnx-community/opus-mt-en-zh
+https://creativecommons.org/licenses/by/4.0/

@@ -273,6 +273,13 @@ async fn async_main() -> ExitCode {
     let translation_model = codeg_lib::reasoning_translation::model::TranslationModelManager::new(
         data_dir.clone(),
     );
+    let translation_service =
+        codeg_lib::reasoning_translation::service::TranslationService::new(
+            codeg_lib::reasoning_translation::engine::OnnxMarianEngine::new(
+                translation_model.clone(),
+            ),
+            translation_model.clone(),
+        );
     let state = Arc::new(AppState {
         db,
         connection_manager,
@@ -297,6 +304,7 @@ async fn async_main() -> ExitCode {
         system_op_lock: codeg_lib::app_state::default_system_op_lock(),
         update_state: codeg_lib::app_state::default_update_state(),
         translation_model,
+        translation_service,
     });
 
     // Logging phase 3: wire the emitter so the Logs viewer's live tail

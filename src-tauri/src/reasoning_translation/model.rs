@@ -108,6 +108,36 @@ impl TranslationModelManager {
         })
     }
 
+    /// Test-only: build a manager whose model dir already contains one valid
+    /// file, so services can translate without any network traffic.
+    #[cfg(test)]
+    pub(crate) fn new_for_test_ready(data_dir: PathBuf) -> Arc<Self> {
+        let content = b"abc";
+        let hash: String = {
+            use sha2::Digest as _;
+            let mut hasher = Sha256::new();
+            hasher.update(content);
+            hasher
+                .finalize()
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect()
+        };
+        let mgr = Self::new_with_manifest_for_test(
+            data_dir,
+            "http://primary.invalid".to_string(),
+            "http://mirror.invalid".to_string(),
+            vec![("a.bin", hash)],
+        );
+        let dir = mgr.model_dir();
+        std::fs::create_dir_all(&dir).expect("create test model dir");
+        std::fs::write(dir.join("a.bin"), content).expect("write test model file");
+        mgr.set_status(TranslationModelStatus::Ready {
+            revision: mgr.manifest.revision.clone(),
+        });
+        mgr
+    }
+
     pub fn status(&self) -> TranslationModelStatus {
         self.state.lock().expect("model status lock").clone()
     }

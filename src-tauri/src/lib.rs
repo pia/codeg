@@ -319,6 +319,20 @@ mod tauri_app {
                 app.manage(crate::reasoning_translation::model::TranslationModelManager::new(
                     effective_data_dir.clone(),
                 ));
+                let translation_model = app
+                    .state::<std::sync::Arc<
+                        crate::reasoning_translation::model::TranslationModelManager,
+                    >>()
+                    .inner()
+                    .clone();
+                app.manage(
+                    crate::reasoning_translation::service::TranslationService::new(
+                        crate::reasoning_translation::engine::OnnxMarianEngine::new(
+                            translation_model.clone(),
+                        ),
+                        translation_model,
+                    ),
+                );
 
                 // Restore and apply saved system proxy settings before any network operation.
                 let db = app.state::<db::AppDatabase>();
@@ -1120,6 +1134,10 @@ mod tauri_app {
                 system_settings::update_system_terminal_settings,
                 system_settings::get_reasoning_translation_settings,
                 system_settings::update_reasoning_translation_settings,
+                crate::reasoning_translation::commands::reasoning_translation_model_status,
+                crate::reasoning_translation::commands::reasoning_translation_download_model,
+                crate::reasoning_translation::commands::reasoning_translation_delete_model,
+                crate::reasoning_translation::commands::reasoning_translation_translate,
                 system_settings::get_available_terminal_shells,
                 system_settings::probe_terminal_shell_path,
                 system_settings::get_system_rendering_settings,

@@ -623,6 +623,22 @@ pub fn build_router(
             "/update_reasoning_translation_settings",
             post(handlers::system_settings::update_reasoning_translation_settings),
         )
+        .route(
+            "/reasoning_translation_model_status",
+            post(handlers::reasoning_translation::model_status),
+        )
+        .route(
+            "/reasoning_translation_download_model",
+            post(handlers::reasoning_translation::download_model),
+        )
+        .route(
+            "/reasoning_translation_delete_model",
+            post(handlers::reasoning_translation::delete_model),
+        )
+        .route(
+            "/reasoning_translation_translate",
+            post(handlers::reasoning_translation::translate),
+        )
         // ─── Logging ───
         .route(
             "/get_log_settings",

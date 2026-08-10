@@ -78,6 +78,9 @@ pub struct AppState {
     /// Translation model manager (download/verify/delete + status). Desktop
     /// mode also manages the same Arc directly for Tauri commands.
     pub translation_model: std::sync::Arc<crate::reasoning_translation::model::TranslationModelManager>,
+    /// Serialized translation service shared by Tauri commands and web
+    /// handlers. Desktop mode also manages the same Arc directly.
+    pub translation_service: std::sync::Arc<crate::reasoning_translation::service::TranslationService>,
 }
 
 pub fn default_system_op_lock() -> Arc<tokio::sync::Mutex<()>> {
@@ -215,6 +218,14 @@ impl AppState {
         let emitter = EventEmitter::web_only(broadcaster.clone(), acp_event_bus.clone());
 
         let connection_manager = default_connection_manager();
+        let translation_model =
+            crate::reasoning_translation::model::TranslationModelManager::new(data_dir.clone());
+        let translation_service = crate::reasoning_translation::service::TranslationService::new(
+            crate::reasoning_translation::engine::OnnxMarianEngine::new(
+                translation_model.clone(),
+            ),
+            translation_model.clone(),
+        );
         let (
             delegation_broker,
             delegation_tokens,
@@ -250,9 +261,8 @@ impl AppState {
             chat_authoring_config,
             system_op_lock: default_system_op_lock(),
             update_state: default_update_state(),
-            translation_model: crate::reasoning_translation::model::TranslationModelManager::new(
-                data_dir.clone(),
-            ),
+            translation_model,
+            translation_service,
         }
     }
 }

@@ -759,6 +759,17 @@ pub(crate) async fn do_start_web_server_tauri(
     persist_web_service_config(&db.conn, &token, port_val).await?;
 
     let static_dir = find_static_dir_tauri(&app);
+    let translation_model = app
+        .state::<Arc<crate::reasoning_translation::model::TranslationModelManager>>()
+        .inner()
+        .clone();
+    let translation_service =
+        crate::reasoning_translation::service::TranslationService::new(
+            crate::reasoning_translation::engine::OnnxMarianEngine::new(
+                translation_model.clone(),
+            ),
+            translation_model.clone(),
+        );
 
     // Build AppState for the router
     let app_state = Arc::new(AppState {
@@ -843,10 +854,8 @@ pub(crate) async fn do_start_web_server_tauri(
             .state::<crate::update::AppUpdateStateHandle>()
             .inner()
             .clone(),
-        translation_model: app
-            .state::<Arc<crate::reasoning_translation::model::TranslationModelManager>>()
-            .inner()
-            .clone(),
+        translation_model,
+        translation_service,
     });
 
     // See do_start_web_server_with_state for rationale on the reset.

@@ -97,7 +97,27 @@ pub async fn ensure_uv_tool(on_progress: impl Fn(&str)) -> Result<PathBuf, AcpEr
     let result: Result<PathBuf, AcpError> = async {
         let archive_path = tmp_dir.join("archive");
         on_progress(&format!("Downloading uv {UV_TOOL_VERSION}..."));
-        download_file_with_progress(&url, &archive_path, &on_progress).await?;
+        let mut last_reported_mb: u64 = 0;
+        crate::network::download::download_file_with_progress(
+            &url,
+            &archive_path,
+            || false,
+            |downloaded, total| {
+                let current_mb = downloaded / (1024 * 1024);
+                if current_mb > last_reported_mb {
+                    last_reported_mb = current_mb;
+                    match total {
+                        Some(total) => on_progress(&format!(
+                            "Downloading... {current_mb:.0} MB / {:.1} MB",
+                            total as f64 / (1024.0 * 1024.0)
+                        )),
+                        None => on_progress(&format!("Downloading... {current_mb:.0} MB")),
+                    }
+                }
+            },
+        )
+        .await
+        .map_err(|e| AcpError::DownloadFailed(e.to_string()))?;
 
         let extract_dir = tmp_dir.join("extracted");
         std::fs::create_dir_all(&extract_dir)
@@ -524,7 +544,27 @@ async fn ensure_binary_with_progress(
     let result: Result<PathBuf, AcpError> = async {
         let archive_path = tmp_dir.join("archive");
         on_progress(&format!("Downloading {archive_url}"));
-        download_file_with_progress(archive_url, &archive_path, &on_progress).await?;
+        let mut last_reported_mb: u64 = 0;
+        crate::network::download::download_file_with_progress(
+            archive_url,
+            &archive_path,
+            || false,
+            |downloaded, total| {
+                let current_mb = downloaded / (1024 * 1024);
+                if current_mb > last_reported_mb {
+                    last_reported_mb = current_mb;
+                    match total {
+                        Some(total) => on_progress(&format!(
+                            "Downloading... {current_mb:.0} MB / {:.1} MB",
+                            total as f64 / (1024.0 * 1024.0)
+                        )),
+                        None => on_progress(&format!("Downloading... {current_mb:.0} MB")),
+                    }
+                }
+            },
+        )
+        .await
+        .map_err(|e| AcpError::DownloadFailed(e.to_string()))?;
 
         // Verify BEFORE extracting: a tampered archive must never have its
         // contents written anywhere but the temp dir this closure cleans up.
@@ -657,67 +697,6 @@ pub(crate) fn find_binary_recursive(dir: &PathBuf, name: &str) -> Option<PathBuf
         }
     }
     None
-}
-
-async fn download_file_with_progress(
-    url: &str,
-    dest: &PathBuf,
-    on_progress: &impl Fn(&str),
-) -> Result<(), AcpError> {
-    use futures_util::StreamExt;
-
-    let response = reqwest::Client::new()
-        .get(url)
-        .send()
-        .await
-        .map_err(|e| AcpError::DownloadFailed(format!("HTTP request failed: {e}")))?;
-
-    if !response.status().is_success() {
-        return Err(AcpError::DownloadFailed(format!(
-            "HTTP {} for {url}",
-            response.status()
-        )));
-    }
-
-    let total_size = response.content_length();
-    let mut downloaded: u64 = 0;
-    let mut last_reported_mb: u64 = 0;
-    let mut stream = response.bytes_stream();
-    let mut file = std::fs::File::create(dest)
-        .map_err(|e| AcpError::DownloadFailed(format!("failed to create archive file: {e}")))?;
-
-    use std::io::Write;
-    while let Some(chunk) = stream.next().await {
-        let chunk =
-            chunk.map_err(|e| AcpError::DownloadFailed(format!("failed to read chunk: {e}")))?;
-        file.write_all(&chunk)
-            .map_err(|e| AcpError::DownloadFailed(format!("failed to write archive: {e}")))?;
-        downloaded += chunk.len() as u64;
-
-        // Report progress every 1MB
-        let current_mb = downloaded / (1024 * 1024);
-        if current_mb > last_reported_mb {
-            last_reported_mb = current_mb;
-            if let Some(total) = total_size {
-                let total_mb = total as f64 / (1024.0 * 1024.0);
-                on_progress(&format!(
-                    "Downloading... {current_mb:.0} MB / {total_mb:.1} MB"
-                ));
-            } else {
-                on_progress(&format!("Downloading... {current_mb:.0} MB"));
-            }
-        }
-    }
-
-    if let Some(total) = total_size {
-        let total_mb = total as f64 / (1024.0 * 1024.0);
-        on_progress(&format!("Download complete ({total_mb:.1} MB)"));
-    } else {
-        let final_mb = downloaded as f64 / (1024.0 * 1024.0);
-        on_progress(&format!("Download complete ({final_mb:.1} MB)"));
-    }
-
-    Ok(())
 }
 
 fn extract_tar_gz(archive: &PathBuf, dest: &PathBuf) -> Result<(), AcpError> {

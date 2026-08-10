@@ -128,6 +128,8 @@ semver = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt", "registry", "std"] }
 tracing-appender = "0.2"
+ort = "=2.0.0-rc.12"
+rust_tokenizers = "6.1"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-window-state = { version = "2", optional = true }
@@ -147,6 +149,7 @@ junction = "1"
 libc = "0.2"
 
 [dev-dependencies]
+anyhow = "1"
 tempfile = "3"
 temp-env = { version = "0.3", features = ["async_closure"] }
 tokio = { version = "1", features = ["test-util", "macros", "rt", "sync", "time"] }

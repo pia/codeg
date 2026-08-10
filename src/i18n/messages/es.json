@@ -1347,7 +1347,22 @@
     "restartRequired": "Guardado. Reinicia la aplicación para aplicar el cambio.",
     "restartNow": "Reiniciar ahora",
     "restartFailed": "No se pudo reiniciar: {message}",
-    "loadFailed": "Error al cargar: {message}"
+    "loadFailed": "Error al cargar: {message}",
+    "saveFailed": "Error al guardar la configuración: {message}",
+    "downloadFailed": "Error al iniciar la descarga: {message}",
+    "deleteFailed": "Error al eliminar el modelo: {message}",
+    "sectionTitle": "Traducción del razonamiento",
+    "sectionDescription": "Al expandir un bloque de razonamiento, traduce el texto en inglés a chino simplificado con un modelo local. El código y los enlaces no se tocan.",
+    "enabled": "Activar la traducción del razonamiento",
+    "modelNotDownloaded": "Modelo no descargado",
+    "modelDownloading": "Descargando {downloaded} MB / {total} MB",
+    "modelDownloadingUnknownTotal": "Descargando {downloaded} MB",
+    "modelReady": "Modelo listo",
+    "modelFailed": "Error al descargar el modelo: {message}",
+    "downloadModel": "Descargar modelo",
+    "deleteModel": "Eliminar modelo",
+    "deleteModelConfirm": "¿Eliminar el modelo de traducción descargado? Podrás volver a descargarlo más tarde.",
+    "modelInfo": "Modelo: opus-mt-en-zh (OPUS-MT, CC-BY-4.0)"
   },
   "LoginPage": {
     "documentTitle": "Iniciar sesión - codeg",

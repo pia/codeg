@@ -35,6 +35,7 @@ import { SessionFeedbackSettingsSection } from "@/components/settings/session-fe
 import { AskQuestionSettingsSection } from "@/components/settings/ask-question-settings"
 import { SessionInfoSettingsSection } from "@/components/settings/session-info-settings"
 import { ChatAuthoringSettingsSection } from "@/components/settings/chat-authoring-settings"
+import { ReasoningTranslationSettingsSection } from "@/components/settings/reasoning-translation-settings"
 
 const TERMINAL_SHELL_OPTION_SYSTEM = "system"
 const TERMINAL_SHELL_OPTION_CUSTOM = "custom"
@@ -401,6 +402,8 @@ export function GeneralSettings() {
         <SessionInfoSettingsSection />
 
         <ChatAuthoringSettingsSection />
+
+        <ReasoningTranslationSettingsSection />
       </div>
     </ScrollArea>
   )

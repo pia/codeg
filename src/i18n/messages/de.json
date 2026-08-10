@@ -1347,7 +1347,22 @@
     "restartRequired": "Gespeichert. Starten Sie die App neu, damit die Änderung wirksam wird.",
     "restartNow": "Jetzt neu starten",
     "restartFailed": "Neustart fehlgeschlagen: {message}",
-    "loadFailed": "Laden fehlgeschlagen: {message}"
+    "loadFailed": "Laden fehlgeschlagen: {message}",
+    "saveFailed": "Einstellungen speichern fehlgeschlagen: {message}",
+    "downloadFailed": "Download starten fehlgeschlagen: {message}",
+    "deleteFailed": "Modell löschen fehlgeschlagen: {message}",
+    "sectionTitle": "Übersetzung des Denkprozesses",
+    "sectionDescription": "Beim Aufklappen eines Reasoning-Blocks wird englischer Fließtext mit einem lokalen Modell ins vereinfachte Chinesisch übersetzt. Code und Links bleiben unverändert.",
+    "enabled": "Übersetzung des Denkprozesses aktivieren",
+    "modelNotDownloaded": "Modell nicht heruntergeladen",
+    "modelDownloading": "Wird heruntergeladen {downloaded} MB / {total} MB",
+    "modelDownloadingUnknownTotal": "Wird heruntergeladen {downloaded} MB",
+    "modelReady": "Modell bereit",
+    "modelFailed": "Modell-Download fehlgeschlagen: {message}",
+    "downloadModel": "Modell herunterladen",
+    "deleteModel": "Modell löschen",
+    "deleteModelConfirm": "Das heruntergeladene Übersetzungsmodell löschen? Du kannst es später erneut herunterladen.",
+    "modelInfo": "Modell: opus-mt-en-zh (OPUS-MT, CC-BY-4.0)"
   },
   "LoginPage": {
     "documentTitle": "Anmelden - codeg",

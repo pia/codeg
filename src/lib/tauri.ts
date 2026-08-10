@@ -51,11 +51,13 @@ import type {
   WorkspaceSnapshotResponse,
   GitLogResult,
   AvailableTerminalShells,
+  ReasoningTranslationSettings,
   AppLocale,
   SystemLanguageSettings,
   SystemProxySettings,
   SystemRenderingSettings,
   SystemTerminalSettings,
+  TranslationModelStatus,
   GitCredentials,
   GitDetectResult,
   GitSettings,
@@ -348,6 +350,38 @@ export async function setTrayLocale(locale: AppLocale): Promise<void> {
 
 export async function getSystemTerminalSettings(): Promise<SystemTerminalSettings> {
   return invoke("get_system_terminal_settings")
+}
+
+export async function getReasoningTranslationSettings(): Promise<ReasoningTranslationSettings> {
+  return invoke("get_reasoning_translation_settings")
+}
+
+export async function updateReasoningTranslationSettings(
+  settings: ReasoningTranslationSettings
+): Promise<ReasoningTranslationSettings> {
+  return invoke("update_reasoning_translation_settings", {
+    settings,
+  })
+}
+
+export async function getReasoningTranslationModelStatus(): Promise<TranslationModelStatus> {
+  return invoke("reasoning_translation_model_status")
+}
+
+export async function downloadReasoningTranslationModel(): Promise<TranslationModelStatus> {
+  return invoke("reasoning_translation_download_model")
+}
+
+export async function deleteReasoningTranslationModel(): Promise<TranslationModelStatus> {
+  return invoke("reasoning_translation_delete_model")
+}
+
+export async function translateReasoningSegments(
+  segments: string[]
+): Promise<string[]> {
+  return invoke("reasoning_translation_translate", {
+    segments,
+  })
 }
 
 export async function updateSystemTerminalSettings(

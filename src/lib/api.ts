@@ -105,10 +105,12 @@ import type {
   GitLogResult,
   GitLogFileChange,
   AvailableTerminalShells,
+  ReasoningTranslationSettings,
   SystemLanguageSettings,
   SystemProxySettings,
   SystemRenderingSettings,
   SystemTerminalSettings,
+  TranslationModelStatus,
   LogSettings,
   LogSettingsView,
   LogRecord,
@@ -1389,6 +1391,38 @@ export async function updateSystemTerminalSettings(
   settings: SystemTerminalSettings
 ): Promise<SystemTerminalSettings> {
   return getTransport().call("update_system_terminal_settings", { settings })
+}
+
+export async function getReasoningTranslationSettings(): Promise<ReasoningTranslationSettings> {
+  return getTransport().call("get_reasoning_translation_settings")
+}
+
+export async function updateReasoningTranslationSettings(
+  settings: ReasoningTranslationSettings
+): Promise<ReasoningTranslationSettings> {
+  return getTransport().call("update_reasoning_translation_settings", {
+    settings,
+  })
+}
+
+export async function getReasoningTranslationModelStatus(): Promise<TranslationModelStatus> {
+  return getTransport().call("reasoning_translation_model_status")
+}
+
+export async function downloadReasoningTranslationModel(): Promise<TranslationModelStatus> {
+  return getTransport().call("reasoning_translation_download_model")
+}
+
+export async function deleteReasoningTranslationModel(): Promise<TranslationModelStatus> {
+  return getTransport().call("reasoning_translation_delete_model")
+}
+
+export async function translateReasoningSegments(
+  segments: string[]
+): Promise<string[]> {
+  return getTransport().call("reasoning_translation_translate", {
+    segments,
+  })
 }
 
 export async function getAvailableTerminalShells(): Promise<AvailableTerminalShells> {

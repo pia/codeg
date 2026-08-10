@@ -1347,7 +1347,22 @@
     "restartRequired": "已儲存，需重新啟動應用程式才會生效。",
     "restartNow": "立即重新啟動",
     "restartFailed": "重新啟動失敗：{message}",
-    "loadFailed": "載入失敗：{message}"
+    "loadFailed": "載入失敗：{message}",
+    "saveFailed": "儲存設定失敗：{message}",
+    "downloadFailed": "啟動下載失敗：{message}",
+    "deleteFailed": "刪除模型失敗：{message}",
+    "sectionTitle": "思維鏈翻譯",
+    "sectionDescription": "展開思維鏈時用本地模型把英文翻譯為簡體中文，程式碼與連結保持原文。",
+    "enabled": "啟用思維鏈翻譯",
+    "modelNotDownloaded": "模型未下載",
+    "modelDownloading": "下載中 {downloaded} MB / {total} MB",
+    "modelDownloadingUnknownTotal": "下載中 {downloaded} MB",
+    "modelReady": "模型已就緒",
+    "modelFailed": "模型下載失敗：{message}",
+    "downloadModel": "下載模型",
+    "deleteModel": "刪除模型",
+    "deleteModelConfirm": "確定刪除已下載的翻譯模型嗎？之後可重新下載。",
+    "modelInfo": "模型：opus-mt-en-zh（OPUS-MT，CC-BY-4.0）"
   },
   "LoginPage": {
     "documentTitle": "登入 - codeg",

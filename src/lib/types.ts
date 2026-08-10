@@ -2626,6 +2626,21 @@ export interface SystemTerminalSettings {
   default_shell: string | null
 }
 
+export interface ReasoningTranslationSettings {
+  enabled: boolean
+  target_language: string
+}
+
+export type TranslationModelStatus =
+  | { state: "not_downloaded" }
+  | {
+      state: "downloading"
+      downloaded_bytes: number
+      total_bytes: number | null
+    }
+  | { state: "ready"; revision: string }
+  | { state: "failed"; message: string }
+
 export interface TerminalShellOption {
   id: string
   label_key: string

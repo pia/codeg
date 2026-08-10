@@ -1347,7 +1347,22 @@
     "restartRequired": "Saved. Restart the app for the change to take effect.",
     "restartNow": "Restart now",
     "restartFailed": "Failed to restart: {message}",
-    "loadFailed": "Load failed: {message}"
+    "loadFailed": "Load failed: {message}",
+    "saveFailed": "Failed to save settings: {message}",
+    "downloadFailed": "Failed to start download: {message}",
+    "deleteFailed": "Failed to delete model: {message}",
+    "sectionTitle": "Reasoning Translation",
+    "sectionDescription": "When expanding a reasoning block, translate English prose to Simplified Chinese with a local model. Code and links stay untouched.",
+    "enabled": "Enable reasoning translation",
+    "modelNotDownloaded": "Model not downloaded",
+    "modelDownloading": "Downloading {downloaded} MB / {total} MB",
+    "modelDownloadingUnknownTotal": "Downloading {downloaded} MB",
+    "modelReady": "Model ready",
+    "modelFailed": "Model download failed: {message}",
+    "downloadModel": "Download model",
+    "deleteModel": "Delete model",
+    "deleteModelConfirm": "Delete the downloaded translation model? You can download it again later.",
+    "modelInfo": "Model: opus-mt-en-zh (OPUS-MT, CC-BY-4.0)"
   },
   "LoginPage": {
     "documentTitle": "Login - codeg",

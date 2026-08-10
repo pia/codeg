@@ -1347,7 +1347,22 @@
     "restartRequired": "تم الحفظ. أعد تشغيل التطبيق ليصبح التغيير نافذًا.",
     "restartNow": "إعادة التشغيل الآن",
     "restartFailed": "فشل إعادة التشغيل: {message}",
-    "loadFailed": "فشل التحميل: {message}"
+    "loadFailed": "فشل التحميل: {message}",
+    "saveFailed": "فشل حفظ الإعدادات: {message}",
+    "downloadFailed": "فشل بدء التنزيل: {message}",
+    "deleteFailed": "فشل حذف النموذج: {message}",
+    "sectionTitle": "ترجمة التفكير",
+    "sectionDescription": "عند توسيع كتلة التفكير، تُترجم النصوص الإنجليزية إلى الصينية المبسطة باستخدام نموذج محلي. تبقى الشيفرة والروابط كما هي.",
+    "enabled": "تفعيل ترجمة التفكير",
+    "modelNotDownloaded": "النموذج غير مُحمَّل",
+    "modelDownloading": "جارٍ التنزيل {downloaded} م.ب / {total} م.ب",
+    "modelDownloadingUnknownTotal": "جارٍ التنزيل {downloaded} م.ب",
+    "modelReady": "النموذج جاهز",
+    "modelFailed": "فشل تنزيل النموذج: {message}",
+    "downloadModel": "تنزيل النموذج",
+    "deleteModel": "حذف النموذج",
+    "deleteModelConfirm": "حذف نموذج الترجمة المُحمَّل؟ يمكنك تنزيله مرة أخرى لاحقًا.",
+    "modelInfo": "النموذج: opus-mt-en-zh (OPUS-MT, CC-BY-4.0)"
   },
   "LoginPage": {
     "documentTitle": "تسجيل الدخول - codeg",

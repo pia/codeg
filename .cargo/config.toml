@@ -1,3 +1,13 @@
 [target.aarch64-unknown-linux-gnu]
 linker = "aarch64-linux-gnu-gcc"
 ar = "aarch64-linux-gnu-gcc-ar"
+
+# Windows: ONNX Runtime's prebuilt static lib imports DirectML.dll even for
+# CPU-only inference. Delay-load it so the app still starts on systems
+# without DirectML (Win7/8, minimal Win10/Server images); the CPU execution
+# provider never calls into it.
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+    "-C", "link-arg=/DELAYLOAD:DirectML.dll",
+    "-C", "link-arg=delayimp.lib",
+]

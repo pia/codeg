@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -14,6 +15,7 @@ pub struct TranslationService {
     engine: Arc<dyn TranslationEngine>,
     model: Arc<TranslationModelManager>,
     queue: Arc<AsyncMutex<()>>,
+    idle_task_started: Arc<AtomicBool>,
 }
 
 impl TranslationService {
@@ -25,17 +27,25 @@ impl TranslationService {
             engine,
             model,
             queue: Arc::new(AsyncMutex::new(())),
+            idle_task_started: Arc::new(AtomicBool::new(false)),
         });
-        let service_for_task = service.clone();
+        service
+    }
+
+    /// Start the idle-unload loop on first use. Deliberately not in `new()`:
+    /// the desktop Tauri setup thread has no Tokio reactor, so spawning there
+    /// panics. All callers of this method run inside an async context.
+    fn ensure_idle_task(&self) {
+        if self.idle_task_started.swap(true, Ordering::SeqCst) {
+            return;
+        }
+        let engine = self.engine.clone();
         tokio::spawn(async move {
             loop {
                 tokio::time::sleep(IDLE_UNLOAD_TIMEOUT).await;
-                service_for_task
-                    .engine
-                    .unload_if_idle(IDLE_UNLOAD_TIMEOUT);
+                engine.unload_if_idle(IDLE_UNLOAD_TIMEOUT);
             }
         });
-        service
     }
 
     /// Serialized translation: one inference at a time, model downloaded on
@@ -45,6 +55,7 @@ impl TranslationService {
         segments: Vec<String>,
     ) -> Result<Vec<String>, AppCommandError> {
         let _guard = self.queue.lock().await;
+        self.ensure_idle_task();
         if !matches!(self.model.status(), TranslationModelStatus::Ready { .. }) {
             self.model.start_download().await?;
         }
@@ -62,6 +73,7 @@ impl TranslationService {
     /// flight, then drop engine sessions before removing files.
     pub async fn delete_model(&self) -> Result<(), AppCommandError> {
         let _guard = self.queue.lock().await;
+        self.ensure_idle_task();
         self.engine.reset();
         self.model.delete_model()
     }

@@ -309,14 +309,24 @@ fn load_onnx(dir: &Path) -> Result<LoadedInner, TranslationError> {
         false,
     )
     .map_err(|e| TranslationError::Load(e.to_string()))?;
+    let threads = cpu_threads();
     let encoder = Session::builder()
-        .and_then(|mut b| b.commit_from_file(dir.join("onnx/encoder_model.onnx")))
+        .and_then(|mut b| {
+            b = b.with_intra_threads(threads)?;
+            b.commit_from_file(dir.join("onnx/encoder_model.onnx"))
+        })
         .map_err(|e| TranslationError::Load(e.to_string()))?;
     let decoder = Session::builder()
-        .and_then(|mut b| b.commit_from_file(dir.join("onnx/decoder_model.onnx")))
+        .and_then(|mut b| {
+            b = b.with_intra_threads(threads)?;
+            b.commit_from_file(dir.join("onnx/decoder_model.onnx"))
+        })
         .map_err(|e| TranslationError::Load(e.to_string()))?;
     let decoder_with_past = Session::builder()
-        .and_then(|mut b| b.commit_from_file(dir.join("onnx/decoder_with_past_model.onnx")))
+        .and_then(|mut b| {
+            b = b.with_intra_threads(threads)?;
+            b.commit_from_file(dir.join("onnx/decoder_with_past_model.onnx"))
+        })
         .map_err(|e| TranslationError::Load(e.to_string()))?;
 
     Ok(LoadedInner {
@@ -329,6 +339,16 @@ fn load_onnx(dir: &Path) -> Result<LoadedInner, TranslationError> {
         pad,
         max_len,
     })
+}
+
+/// Cap ONNX Runtime's worker threads. The model is small; more threads
+/// mostly waste CPU on weak machines without meaningfully speeding up
+/// sentence translation.
+fn cpu_threads() -> usize {
+    std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1)
+        .clamp(1, 4)
 }
 
 fn argmax_ignoring(scores: &[f32], ignore: i64) -> i64 {

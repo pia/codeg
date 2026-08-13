@@ -35,6 +35,7 @@ export function ReasoningTranslationSettingsSection() {
   const [status, setStatus] = useState<TranslationModelStatus | null>(null)
   const [saving, setSaving] = useState(false)
   const [acting, setActing] = useState(false)
+  const [downloadStarted, setDownloadStarted] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -53,19 +54,31 @@ export function ReasoningTranslationSettingsSection() {
     void load()
   }, [load])
 
-  // Poll while a download is in flight so progress/terminal states update
-  // without a manual refresh.
+  // Poll after a download has been kicked off until it settles. The kickoff
+  // command returns the state at the moment the task was spawned, which is
+  // usually still `not_downloaded`; waiting only for `downloading` would
+  // therefore miss both fast completions and the transition itself.
   useEffect(() => {
-    if (status?.state !== "downloading") return
+    if (!downloadStarted) return
+    const state = status?.state
+    if (state !== "not_downloaded" && state !== "downloading") {
+      setDownloadStarted(false)
+      return
+    }
     const timer = window.setInterval(() => {
       getReasoningTranslationModelStatus()
-        .then(setStatus)
+        .then((next) => {
+          setStatus(next)
+          if (next.state !== "not_downloaded" && next.state !== "downloading") {
+            setDownloadStarted(false)
+          }
+        })
         .catch(() => {
           // Polling is best-effort; the next tick retries.
         })
     }, STATUS_POLL_MS)
     return () => window.clearInterval(timer)
-  }, [status?.state])
+  }, [downloadStarted, status?.state])
 
   const onEnabledChange = useCallback(
     async (enabled: boolean) => {
@@ -91,6 +104,7 @@ export function ReasoningTranslationSettingsSection() {
     setActing(true)
     try {
       setStatus(await downloadReasoningTranslationModel())
+      setDownloadStarted(true)
     } catch (err) {
       toast.error(t("downloadFailed", { message: toErrorMessage(err) }))
     } finally {

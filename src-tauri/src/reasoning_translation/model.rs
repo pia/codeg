@@ -81,6 +81,7 @@ impl TranslationModelManager {
             download_lock: Arc::new(AsyncMutex::new(())),
         });
         manager.sweep_trash();
+        manager.refresh_status_from_disk();
         manager
     }
 
@@ -139,6 +140,7 @@ impl TranslationModelManager {
     }
 
     pub fn status(&self) -> TranslationModelStatus {
+        self.refresh_status_from_disk();
         self.state.lock().expect("model status lock").clone()
     }
 
@@ -155,6 +157,21 @@ impl TranslationModelManager {
 
     fn set_status(&self, status: TranslationModelStatus) {
         *self.state.lock().expect("model status lock") = status;
+    }
+
+    /// Promote `NotDownloaded` to `Ready` when a valid model directory is
+    /// already on disk — pre-seeded installs, upgrades, or files placed while
+    /// the app was closed would otherwise be reported as missing forever.
+    fn refresh_status_from_disk(&self) {
+        let is_missing = {
+            let guard = self.state.lock().expect("model status lock");
+            matches!(&*guard, TranslationModelStatus::NotDownloaded)
+        };
+        if is_missing && self.verify_dir(&self.model_dir()) {
+            self.set_status(TranslationModelStatus::Ready {
+                revision: self.manifest.revision.clone(),
+            });
+        }
     }
 
     fn update_progress(&self, downloaded_bytes: u64, total_bytes: Option<u64>) {
@@ -518,5 +535,25 @@ mod tests {
         mgr.delete_model().unwrap();
         assert!(!mgr.model_dir().exists());
         assert!(matches!(mgr.status(), TranslationModelStatus::NotDownloaded));
+    }
+
+    #[tokio::test]
+    async fn status_reflects_pre_seeded_files_without_download() {
+        let files = vec![("a.bin", sha256_hex(b"abc"))];
+        let dir = tempfile::tempdir().unwrap();
+        let mgr = TranslationModelManager::new_with_manifest_for_test(
+            dir.path().to_path_buf(),
+            "http://primary.invalid".to_string(),
+            "http://mirror.invalid".to_string(),
+            files,
+        );
+        let model_dir = mgr.model_dir();
+        std::fs::create_dir_all(&model_dir).unwrap();
+        std::fs::write(model_dir.join("a.bin"), b"abc").unwrap();
+
+        assert!(matches!(
+            mgr.status(),
+            TranslationModelStatus::Ready { .. }
+        ));
     }
 }

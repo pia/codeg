@@ -186,6 +186,7 @@ export function useReasoningTranslation(
   const [isPending, setIsPending] = useState(false)
   const [translationEnabled, setTranslationEnabled] = useState(false)
   const generationRef = useRef(0)
+  const lastSubmittedRef = useRef<string | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -203,6 +204,7 @@ export function useReasoningTranslation(
 
   useEffect(() => {
     if (!translationEnabled) {
+      lastSubmittedRef.current = null
       const timer = window.setTimeout(() => {
         setTranslated(null)
         setIsPending(false)
@@ -244,35 +246,49 @@ export function useReasoningTranslation(
       setTranslated(next)
     }
 
-    const timer = window.setTimeout(
-      () => {
-        if (pendingTexts.length === 0) {
+    const signature = pendingTexts.join("\u0000")
+
+    if (pendingTexts.length === 0) {
+      const timer = window.setTimeout(() => {
+        if (generation === generationRef.current) {
           setIsPending(false)
           rebuild()
-          return
         }
-        setIsPending(true)
-        translateReasoningSegments(pendingTexts)
-          .then((translations) => {
-            translations.forEach((translation, index) => {
-              proseCache.set(pendingTexts[index], translation)
-            })
-            if (generation === generationRef.current) {
-              setIsPending(false)
-              rebuild()
-            }
-          })
-          .catch(() => {
-            if (generation === generationRef.current) {
-              setIsPending(false)
-              rebuild()
-            }
-          })
-      },
-      isStreaming ? 250 : 0
-    )
+      }, 0)
+      return () => window.clearTimeout(timer)
+    }
 
-    return () => window.clearTimeout(timer)
+    if (lastSubmittedRef.current === signature) {
+      const timer = window.setTimeout(() => {
+        if (generation === generationRef.current) rebuild()
+      }, 0)
+      return () => window.clearTimeout(timer)
+    }
+
+    // Submit as soon as a new complete sentence appears, even while the
+    // stream keeps updating. A microtask is used so the request is not
+    // cancelled by the next content update's effect cleanup.
+    lastSubmittedRef.current = signature
+    void Promise.resolve().then(() => {
+      if (generation !== generationRef.current) return
+      setIsPending(true)
+      translateReasoningSegments(pendingTexts)
+        .then((translations) => {
+          translations.forEach((translation, index) => {
+            proseCache.set(pendingTexts[index], translation)
+          })
+          if (generation === generationRef.current) {
+            setIsPending(false)
+            rebuild()
+          }
+        })
+        .catch(() => {
+          if (generation === generationRef.current) {
+            setIsPending(false)
+            rebuild()
+          }
+        })
+    })
   }, [content, isStreaming, translationEnabled])
 
   const displayText =

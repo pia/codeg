@@ -23,13 +23,12 @@ impl TranslationService {
         engine: Arc<dyn TranslationEngine>,
         model: Arc<TranslationModelManager>,
     ) -> Arc<Self> {
-        let service = Arc::new(Self {
+        Arc::new(Self {
             engine,
             model,
             queue: Arc::new(AsyncMutex::new(())),
             idle_task_started: Arc::new(AtomicBool::new(false)),
-        });
-        service
+        })
     }
 
     /// Start the idle-unload loop on first use. Deliberately not in `new()`:

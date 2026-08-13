@@ -10,10 +10,12 @@ use thiserror::Error;
 
 use super::model::TranslationModelManager;
 
-const VOCAB_SIZE: usize = 65001;
 const D_MODEL: usize = 512;
 const MAX_TOKENS_PER_SEGMENT: usize = 510;
 const SENTENCE_BOUNDARIES: &[char] = &['.', '!', '?', '。', '！', '？', '\n'];
+const NUM_LAYERS: usize = 6;
+const NUM_HEADS: usize = 8;
+const HEAD_DIM: usize = 64;
 
 #[derive(Debug, Error)]
 pub enum TranslationError {
@@ -40,6 +42,7 @@ pub trait TranslationEngine: Send + Sync {
 struct LoadedInner {
     encoder: Session,
     decoder: Session,
+    decoder_with_past: Session,
     tokenizer: MarianTokenizer,
     decoder_start: i64,
     eos: i64,
@@ -114,31 +117,136 @@ impl OnnxMarianEngine {
             .1
             .to_vec();
 
-        let mut tgt_ids: Vec<i64> = vec![inner.decoder_start];
-        for _ in 0..inner.max_len {
-            let tgt_len = tgt_ids.len();
-            let dec_out = inner
-                .decoder
-                .run(ort::inputs![
-                    "input_ids" => Tensor::from_array((vec![1usize, tgt_len], tgt_ids.clone()))?,
-                    "encoder_hidden_states" => {
-                        Tensor::from_array((vec![1usize, src_len, D_MODEL], hidden.clone()))?
-                    },
+        // First decoder step (no cache yet): computes the cross-attention
+        // keys/values for the whole source sentence, plus one generated token.
+        let first_out = inner
+            .decoder
+            .run(ort::inputs![
+                "input_ids" => {
+                    Tensor::from_array((vec![1usize, 1usize], vec![inner.decoder_start]))?
+                },
+                "encoder_hidden_states" => {
+                    Tensor::from_array((vec![1usize, src_len, D_MODEL], hidden))?
+                },
+                "encoder_attention_mask" => {
+                    Tensor::from_array((vec![1usize, src_len], vec![1i64; src_len]))?
+                },
+            ])
+            .map_err(|e| TranslationError::Inference(e.to_string()))?;
+        let first_logits = first_out[0]
+            .try_extract_tensor::<f32>()
+            .map_err(|e| TranslationError::Inference(e.to_string()))?
+            .1;
+        let mut tgt_ids: Vec<i64> =
+            vec![inner.decoder_start, argmax_ignoring(first_logits, inner.pad)];
+
+        // Cache layout from the first run:
+        // for each layer i: present.{i}.decoder.key, present.{i}.decoder.value,
+        // present.{i}.encoder.key, present.{i}.encoder.value.
+        let mut dec_past: Vec<Vec<f32>> = Vec::with_capacity(NUM_LAYERS * 2);
+        let mut enc_past: Vec<Vec<f32>> = Vec::with_capacity(NUM_LAYERS * 2);
+        for i in 0..NUM_LAYERS {
+            dec_past.push(
+                first_out[1 + i * 4]
+                    .try_extract_tensor::<f32>()
+                    .map_err(|e| TranslationError::Inference(e.to_string()))?
+                    .1
+                    .to_vec(),
+            );
+            dec_past.push(
+                first_out[2 + i * 4]
+                    .try_extract_tensor::<f32>()
+                    .map_err(|e| TranslationError::Inference(e.to_string()))?
+                    .1
+                    .to_vec(),
+            );
+            enc_past.push(
+                first_out[3 + i * 4]
+                    .try_extract_tensor::<f32>()
+                    .map_err(|e| TranslationError::Inference(e.to_string()))?
+                    .1
+                    .to_vec(),
+            );
+            enc_past.push(
+                first_out[4 + i * 4]
+                    .try_extract_tensor::<f32>()
+                    .map_err(|e| TranslationError::Inference(e.to_string()))?
+                    .1
+                    .to_vec(),
+            );
+        }
+
+        if *tgt_ids.last().expect("start token") != inner.eos {
+            for _ in 1..inner.max_len {
+                let past_len = dec_past[0].len() / (NUM_HEADS * HEAD_DIM);
+                let last = *tgt_ids.last().expect("last token");
+                let mut inputs = ort::inputs![
+                    "input_ids" => Tensor::from_array((vec![1usize, 1usize], vec![last]))?,
                     "encoder_attention_mask" => {
                         Tensor::from_array((vec![1usize, src_len], vec![1i64; src_len]))?
                     },
-                ])
-                .map_err(|e| TranslationError::Inference(e.to_string()))?;
-            let logits = dec_out[0]
-                .try_extract_tensor::<f32>()
-                .map_err(|e| TranslationError::Inference(e.to_string()))?
-                .1;
-            let row_start = (tgt_len - 1) * VOCAB_SIZE;
-            let next = argmax_ignoring(&logits[row_start..row_start + VOCAB_SIZE], inner.pad);
-            if next == inner.eos {
-                break;
+                ];
+                for i in 0..NUM_LAYERS {
+                    inputs.push((
+                        format!("past_key_values.{i}.decoder.key").into(),
+                        Tensor::from_array((
+                            vec![1usize, NUM_HEADS, past_len, HEAD_DIM],
+                            dec_past[i * 2].clone(),
+                        ))?
+                        .into(),
+                    ));
+                    inputs.push((
+                        format!("past_key_values.{i}.decoder.value").into(),
+                        Tensor::from_array((
+                            vec![1usize, NUM_HEADS, past_len, HEAD_DIM],
+                            dec_past[i * 2 + 1].clone(),
+                        ))?
+                        .into(),
+                    ));
+                    inputs.push((
+                        format!("past_key_values.{i}.encoder.key").into(),
+                        Tensor::from_array((
+                            vec![1usize, NUM_HEADS, src_len, HEAD_DIM],
+                            enc_past[i * 2].clone(),
+                        ))?
+                        .into(),
+                    ));
+                    inputs.push((
+                        format!("past_key_values.{i}.encoder.value").into(),
+                        Tensor::from_array((
+                            vec![1usize, NUM_HEADS, src_len, HEAD_DIM],
+                            enc_past[i * 2 + 1].clone(),
+                        ))?
+                        .into(),
+                    ));
+                }
+
+                let out = inner
+                    .decoder_with_past
+                    .run(inputs)
+                    .map_err(|e| TranslationError::Inference(e.to_string()))?;
+                let logits = out[0]
+                    .try_extract_tensor::<f32>()
+                    .map_err(|e| TranslationError::Inference(e.to_string()))?
+                    .1;
+                let next = argmax_ignoring(logits, inner.pad);
+                for i in 0..NUM_LAYERS {
+                    dec_past[i * 2] = out[1 + i * 2]
+                        .try_extract_tensor::<f32>()
+                        .map_err(|e| TranslationError::Inference(e.to_string()))?
+                        .1
+                        .to_vec();
+                    dec_past[i * 2 + 1] = out[2 + i * 2]
+                        .try_extract_tensor::<f32>()
+                        .map_err(|e| TranslationError::Inference(e.to_string()))?
+                        .1
+                        .to_vec();
+                }
+                tgt_ids.push(next);
+                if next == inner.eos {
+                    break;
+                }
             }
-            tgt_ids.push(next);
         }
 
         Ok(inner.tokenizer.decode(tgt_ids, true, true))
@@ -207,10 +315,14 @@ fn load_onnx(dir: &Path) -> Result<LoadedInner, TranslationError> {
     let decoder = Session::builder()
         .and_then(|mut b| b.commit_from_file(dir.join("onnx/decoder_model.onnx")))
         .map_err(|e| TranslationError::Load(e.to_string()))?;
+    let decoder_with_past = Session::builder()
+        .and_then(|mut b| b.commit_from_file(dir.join("onnx/decoder_with_past_model.onnx")))
+        .map_err(|e| TranslationError::Load(e.to_string()))?;
 
     Ok(LoadedInner {
         encoder,
         decoder,
+        decoder_with_past,
         tokenizer,
         decoder_start,
         eos,

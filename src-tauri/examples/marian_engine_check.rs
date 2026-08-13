@@ -12,16 +12,21 @@ use codeg_lib::reasoning_translation::service::TranslationService;
 async fn main() -> anyhow::Result<()> {
     let data_dir = std::env::var("CODEG_ENGINE_DATA_DIR")
         .map_err(|_| anyhow::anyhow!("set CODEG_ENGINE_DATA_DIR to the prepared data dir"))?;
+    let text = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "The quick brown fox jumps over the lazy dog.".to_string());
     let model = TranslationModelManager::new(data_dir.into());
     let service = TranslationService::new(
         OnnxMarianEngine::new(model.clone()),
         model,
     );
 
+    let started = std::time::Instant::now();
     let translated = service
-        .translate(vec!["The quick brown fox jumps over the lazy dog.".to_string()])
+        .translate(vec![text])
         .await
         .map_err(|e| anyhow::anyhow!("translate failed: {e}"))?;
     println!("{}", translated.join("\n"));
+    eprintln!("elapsed: {:?}", started.elapsed());
     Ok(())
 }

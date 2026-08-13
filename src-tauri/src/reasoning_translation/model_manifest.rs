@@ -40,6 +40,11 @@ pub(crate) const MODEL_FILES: &[(&str, &str, u64)] = &[
         "679e1b2bcfcd4d8058546e9c3ecff49817ecf8d2ce9d2d1930ff094de1d2ef98",
         235_612_798,
     ),
+    (
+        "onnx/decoder_with_past_model.onnx",
+        "2e19b5847d68a6e52d36635a151fe8be0f3b03ca291af5a9c2b18cfb1a90f92f",
+        222_932_296,
+    ),
 ];
 
 pub(crate) fn file_url(base: &str, revision: &str, file: &str) -> String {

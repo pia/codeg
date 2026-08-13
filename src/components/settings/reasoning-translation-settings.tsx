@@ -166,37 +166,35 @@ export function ReasoningTranslationSettingsSection() {
         <span className="text-xs text-muted-foreground">{t("enabled")}</span>
       </label>
 
-      <div className="space-y-2">
-        <p className="text-[11px] text-muted-foreground">{statusLabel}</p>
-        <div className="flex items-center gap-2">
-          {status?.state !== "ready" && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void onDownload()}
-              disabled={acting || downloading}
-            >
-              <Download className="h-3.5 w-3.5" />
-              {t("downloadModel")}
-            </Button>
-          )}
-          {status?.state === "ready" && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void onDelete()}
-              disabled={acting}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              {t("deleteModel")}
-            </Button>
-          )}
-        </div>
-      </div>
-
       <p className="text-[11px] text-muted-foreground/80 leading-5">
         {t("modelInfo")}
       </p>
+
+      <div className="flex items-center gap-2">
+        {status?.state !== "ready" && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void onDownload()}
+            disabled={acting || downloading}
+          >
+            <Download className="h-3.5 w-3.5" />
+            {t("downloadModel")}
+          </Button>
+        )}
+        {status?.state === "ready" && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void onDelete()}
+            disabled={acting}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {t("deleteModel")}
+          </Button>
+        )}
+        <span className="text-[11px] text-muted-foreground">{statusLabel}</span>
+      </div>
     </section>
   )
 }

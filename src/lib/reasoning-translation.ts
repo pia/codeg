@@ -214,17 +214,18 @@ export function useReasoningTranslation(
     const segments = splitMarkdownPreservingCode(content)
     const proseSegments = segments.filter((s) => s.kind === "prose")
     const pendingTexts: string[] = []
+    const seen = new Set<string>()
 
     for (const segment of proseSegments) {
-      if (proseCache.get(segment.text) !== undefined) continue
-      if (!isStreaming) {
-        pendingTexts.push(segment.text)
-        continue
-      }
       const sentences = splitIntoSentences(segment.text)
-      const complete = sentences.filter(isCompleteSentence)
-      if (complete.length > 0) {
-        pendingTexts.push(complete.join("\n"))
+      const toTranslate = isStreaming
+        ? sentences.filter(isCompleteSentence)
+        : sentences
+      for (const sentence of toTranslate) {
+        if (!seen.has(sentence) && proseCache.get(sentence) === undefined) {
+          seen.add(sentence)
+          pendingTexts.push(sentence)
+        }
       }
     }
 
@@ -235,12 +236,9 @@ export function useReasoningTranslation(
           if (segment.kind !== "prose") return segment.text
           const cached = proseCache.get(segment.text)
           if (cached !== undefined) return cached
-          if (isStreaming) {
-            return splitIntoSentences(segment.text)
-              .map((sentence) => proseCache.get(sentence) ?? sentence)
-              .join("")
-          }
-          return segment.text
+          return splitIntoSentences(segment.text)
+            .map((sentence) => proseCache.get(sentence) ?? sentence)
+            .join("")
         })
         .join("")
       setTranslated(next)

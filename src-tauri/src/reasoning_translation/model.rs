@@ -40,7 +40,7 @@ struct Manifest {
     revision: String,
     primary: String,
     mirror: String,
-    files: Vec<(String, String)>,
+    files: Vec<(String, String, u64)>,
 }
 
 pub struct TranslationModelManager {
@@ -73,7 +73,9 @@ impl TranslationModelManager {
                 mirror: MIRROR_BASE_URL.to_string(),
                 files: MODEL_FILES
                     .iter()
-                    .map(|(file, hash)| ((*file).to_string(), (*hash).to_string()))
+                    .map(|(file, hash, size)| {
+                        ((*file).to_string(), (*hash).to_string(), *size)
+                    })
                     .collect(),
             },
             state: Arc::new(Mutex::new(TranslationModelStatus::NotDownloaded)),
@@ -100,7 +102,7 @@ impl TranslationModelManager {
                 mirror,
                 files: files
                     .into_iter()
-                    .map(|(file, hash)| (file.to_string(), hash))
+                    .map(|(file, hash)| (file.to_string(), hash, 0))
                     .collect(),
             },
             state: Arc::new(Mutex::new(TranslationModelStatus::NotDownloaded)),
@@ -204,7 +206,7 @@ impl TranslationModelManager {
         if !dir.is_dir() {
             return false;
         }
-        self.manifest.files.iter().all(|(file, hash)| {
+        self.manifest.files.iter().all(|(file, hash, _)| {
             let path = dir.join(file);
             path.is_file() && self.verify_file(&path, hash)
         })
@@ -245,8 +247,19 @@ impl TranslationModelManager {
                 .with_detail(e.to_string())
         })?;
 
+        // Aggregate progress across all files so the UI shows one stable
+        // total (~427MB for the pinned model) instead of jumping per file.
+        let total_size = self
+            .manifest
+            .files
+            .iter()
+            .try_fold(0u64, |acc, (_, _, size)| {
+                (*size > 0).then(|| acc + *size)
+            });
+        let mut aggregate_downloaded: u64 = 0;
+
         let result: Result<PathBuf, String> = async {
-            for (file, expected) in &self.manifest.files {
+            for (file, expected, size) in &self.manifest.files {
                 let dest = tmp.join(file);
                 if let Some(parent) = dest.parent() {
                     std::fs::create_dir_all(parent).map_err(|e| {
@@ -255,25 +268,35 @@ impl TranslationModelManager {
                 }
 
                 let mut downloaded_ok = false;
+                let mut last_downloaded: u64 = 0;
                 for base_url in [&self.manifest.primary, &self.manifest.mirror] {
                     if self.cancel_requested.load(Ordering::SeqCst) {
                         return Err("cancelled".to_string());
                     }
                     let url = file_url(base_url, &self.manifest.revision, file);
                     let cancel = self.cancel_requested.clone();
+                    let completed_bytes = aggregate_downloaded;
                     let outcome = tokio::time::timeout(
                         FILE_DOWNLOAD_TIMEOUT,
                         download_file_with_progress(
                             &url,
                             &dest,
                             move || cancel.load(Ordering::SeqCst),
-                            |downloaded, total| self.update_progress(downloaded, total),
+                            |downloaded, _file_total| {
+                                last_downloaded = downloaded;
+                                self.update_progress(
+                                    completed_bytes + downloaded,
+                                    total_size,
+                                );
+                            },
                         ),
                     )
                     .await;
 
                     match outcome {
                         Ok(Ok(())) if self.verify_file(&dest, expected) => {
+                            aggregate_downloaded +=
+                                if *size > 0 { *size } else { last_downloaded };
                             downloaded_ok = true;
                             break;
                         }
